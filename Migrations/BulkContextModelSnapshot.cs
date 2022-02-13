@@ -35,7 +35,7 @@ namespace BulkInsertDemo.Migrations
 
                     b.HasKey("Timestamp", "StoreNo", "ProductCode");
 
-                    b.ToTable("Stocks");
+                    b.ToTable("Stock");
                 });
 #pragma warning restore 612, 618
         }

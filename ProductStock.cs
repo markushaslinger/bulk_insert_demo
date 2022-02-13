@@ -1,8 +1,3 @@
-﻿namespace BulkInsertDemo
-{
-    public sealed class ProductStock
-    {
-        public int ProductCode { get; set; }
-        public int Stock { get; set; }
-    }
-}
+﻿namespace BulkInsertDemo;
+
+public record ProductStock(int ProductCode, int Stock);

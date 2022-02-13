@@ -8,7 +8,7 @@ namespace BulkInsertDemo.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Stocks",
+                name: "Stock",
                 columns: table => new
                 {
                     Timestamp = table.Column<DateTime>(nullable: false),
@@ -18,14 +18,14 @@ namespace BulkInsertDemo.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Stocks", x => new { x.Timestamp, x.StoreNo, x.ProductCode });
+                    table.PrimaryKey("PK_Stock", x => new { x.Timestamp, x.StoreNo, x.ProductCode });
                 });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Stocks");
+                name: "Stock");
         }
     }
 }

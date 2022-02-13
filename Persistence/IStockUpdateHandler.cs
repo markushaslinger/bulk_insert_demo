@@ -1,9 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿namespace BulkInsertDemo.Persistence;
 
-namespace BulkInsertDemo.Persistence
+public interface IStockUpdateHandler
 {
-    public interface IStockUpdateHandler
-    {
-        Task PersistStockUpdate(UpdatePackage package);
-    }
+    Task PersistStockUpdate(UpdatePackage package);
 }

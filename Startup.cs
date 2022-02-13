@@ -1,51 +1,48 @@
 using BulkInsertDemo.Persistence;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
-namespace BulkInsertDemo
+namespace BulkInsertDemo;
+
+public class Startup
 {
-    public class Startup
+    public Startup(IConfiguration configuration)
     {
-        public Startup(IConfiguration configuration)
+        Configuration = configuration;
+    }
+
+    public IConfiguration Configuration { get; }
+
+    // This method gets called by the runtime. Use this method to add services to the container.
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddControllers();
+
+        services.AddSwaggerGen();
+
+        // TODO set proper values in connection string
+        services.AddDbContext<BulkContext>(options => 
+            options.UseSqlServer("Server=localhost;Database=bulktest;User Id=bulker;Password=Bulk1234;"));
+
+        // TODO define inserter to use
+        services.AddScoped<IStockUpdateHandler, RegularInserter>();
+        //services.AddScoped<IStockUpdateHandler, BulkInserter>();
+    }
+
+    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment())
         {
-            Configuration = configuration;
+            app.UseDeveloperExceptionPage();
         }
 
-        public IConfiguration Configuration { get; }
+        app.UseSwagger();
+        app.UseSwaggerUI();
 
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddControllers();
+        app.UseRouting();
 
-            // TODO set proper values in connection string
-            services.AddDbContext<BulkContext>(options => 
-                options.UseSqlServer("Server=192.168.1.124;Database=StockDemo;User Id=bulker;Password=bulk;"));
+        app.UseAuthorization();
 
-            // TODO define inserter to use
-            services.AddScoped<IStockUpdateHandler, RegularInserter>();
-            //services.AddScoped<IStockUpdateHandler, BulkInserter>();
-        }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-
-            //app.UseHttpsRedirection();
-
-            app.UseRouting();
-
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
-        }
+        app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
     }
 }

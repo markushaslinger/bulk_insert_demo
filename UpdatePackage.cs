@@ -1,12 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace BulkInsertDemo;
 
-namespace BulkInsertDemo
-{
-    public sealed class UpdatePackage
-    {
-        public int StoreNo { get; set; }
-        public DateTime Timestamp { get; set; }
-        public IReadOnlyCollection<ProductStock> Stocks { get; set; }
-    }
-}
+public record UpdatePackage(int StoreNo, DateTime Timestamp, IReadOnlyCollection<ProductStock> Stocks);

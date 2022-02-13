@@ -1,78 +1,73 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using Nito.AsyncEx;
 
-namespace BulkInsertDemo.Persistence
+namespace BulkInsertDemo.Persistence;
+
+public abstract class StockUpdateHandlerBase : IStockUpdateHandler
 {
-    public abstract class StockUpdateHandlerBase : IStockUpdateHandler
+    private static readonly AsyncLock mutex = new();
+    private static readonly ConcurrentQueue<UpdatePackage> queue = new();
+    private static bool _running;
+
+    public Task PersistStockUpdate(UpdatePackage package)
     {
-        private static readonly AsyncLock _mutex = new AsyncLock();
-        private static readonly ConcurrentQueue<UpdatePackage> _queue = new ConcurrentQueue<UpdatePackage>();
-        private static bool _running;
-
-        public Task PersistStockUpdate(UpdatePackage package)
+        queue.Enqueue(package);
+        return Task.Run(async () =>
         {
-            _queue.Enqueue(package);
-            return Task.Run(async () =>
+            try
             {
-                try
-                {
-                    await StartPersisting();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Failed to start persisting stock updates: {ex.Message}");
-                }
-            });
-        }
+                await StartPersisting();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to start persisting stock updates: {ex.Message}");
+            }
+        });
+    }
 
-        protected abstract Task Persist(UpdatePackage package);
+    protected abstract Task Persist(UpdatePackage package);
 
-        protected static IEnumerable<StockRow> GetRows(UpdatePackage package)
+    protected static IEnumerable<StockRow> GetRows(UpdatePackage package)
+    {
+        return package.Stocks.Select(s => new StockRow
         {
-            return package.Stocks.Select(s => new StockRow
-            {
-                ProductCode = s.ProductCode,
-                Stock = s.Stock,
-                StoreNo = package.StoreNo,
-                Timestamp = package.Timestamp
-            }).OrderBy(r => r.Timestamp);
-        }
+            ProductCode = s.ProductCode,
+            Stock = s.Stock,
+            StoreNo = package.StoreNo,
+            Timestamp = package.Timestamp
+        }).OrderBy(r => r.Timestamp);
+    }
 
-        private async Task StartPersisting()
+    private async Task StartPersisting()
+    {
+        using (await mutex.LockAsync())
         {
-            using (await _mutex.LockAsync())
+            if (_running)
             {
-                if (_running)
-                {
-                    return;
-                }
-
-                _running = true;
+                return;
             }
 
-            while (_queue.TryDequeue(out var package))
-            {
-                var sw = Stopwatch.StartNew();
-                await Persist(package);
-                var elapsed = sw.Elapsed;
-                var rem = _queue.Count;
+            _running = true;
+        }
+
+        while (queue.TryDequeue(out var package))
+        {
+            var sw = Stopwatch.StartNew();
+            await Persist(package);
+            var elapsed = sw.Elapsed;
+            var rem = queue.Count;
 #pragma warning disable 4014
-                Task.Run(() =>
-                {
-                    Console.WriteLine($"Took {elapsed} to persist update package, {rem} packages remaining in queue");
-                });
-#pragma warning restore 4014
-            }
-
-            using (await _mutex.LockAsync())
+            Task.Run(() =>
             {
-                _running = false;
-            }
+                Console.WriteLine($"Took {elapsed} to persist update package, {rem} packages remaining in queue");
+            });
+#pragma warning restore 4014
+        }
+
+        using (await mutex.LockAsync())
+        {
+            _running = false;
         }
     }
 }

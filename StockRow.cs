@@ -1,12 +1,9 @@
-﻿using System;
+﻿namespace BulkInsertDemo;
 
-namespace BulkInsertDemo
+public class StockRow
 {
-    public class StockRow
-    {
-        public DateTime Timestamp { get; set; }
-        public int StoreNo { get; set; }
-        public int ProductCode { get; set; }
-        public int Stock { get; set; }
-    }
+    public DateTime Timestamp { get; set; }
+    public int StoreNo { get; set; }
+    public int ProductCode { get; set; }
+    public int Stock { get; set; }
 }
